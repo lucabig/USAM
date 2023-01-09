@@ -1,0 +1,25 @@
+
+#### experimental setting
+nexp: 1
+nit: 50000
+etas: [0.001]
+rhos: [0.05]
+f_star: 0 
+
+#### experiment type
+name: 'class_deep_linear'
+
+#### quadratic
+d_quadratic: 20
+
+#### size hidden layer
+HIDDEN: 30
+
+#### sigma noise
+sigma: 0.01
+
+#### matrix sensing
+n_sensing: 20
+U_rank: 5
+num_samples: 100 
+num_samples_test: 100
