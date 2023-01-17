@@ -1,13 +1,16 @@
-
 #### experimental setting
 nexp: 1
 nit: 50000
 etas: [0.001]
-rhos: [0.05]
+rhos: [0.001,0.01,0.03,0.1]
 f_star: 0 
+resolution: 1
+sdes: True
+use_analytical: False
+check_drift: True
 
 #### experiment type
-name: 'class_deep_linear'
+name: 'matrix_sensing'
 
 #### quadratic
 d_quadratic: 20
@@ -19,7 +22,7 @@ HIDDEN: 30
 sigma: 0.01
 
 #### matrix sensing
-n_sensing: 20
-U_rank: 5
-num_samples: 100 
+n_sensing: 5
+U_rank: 2
+num_samples: 10
 num_samples_test: 100
