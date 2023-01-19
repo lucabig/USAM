@@ -321,35 +321,36 @@ def main(cfg):
           stats_USAM_SDE_DRIFT = np.mean(stats_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
           stats_SAM_SDE_DRIFT = np.mean(stats_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
 
-      #error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
-      #error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
-      #error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
-      #error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
-      #error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
-
-      #error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
-      #error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
-      #error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
-      #error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
-      #error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
-
       if cfg.sdes:
-        error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))
-        error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))
-        error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))
-        error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))
-        error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))
+        #error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))
+        #error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))
+        #error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))
+        #error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))
+        #error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))
 
-        error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))
-        error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))
-        error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))
-        error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))
-        error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))
+        #error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))
+        #error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))
+        #error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))
+        #error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))
+        #error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))
+
+        error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
+        error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
+        error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
+
+        error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
+        error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
+        error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
+        
         if cfg.check_drift:
-          error_mean_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE_DRIFT)) 
-          error_mean_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))
-          error_std_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE_DRIFT)) 
-          error_std_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))
+          error_mean_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM))) 
+          error_mean_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))
+          error_std_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM))) 
+          error_std_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))
 
       loss_all_SGD[idx_eta, idx_rho,:] = np.mean(loss_hist_SGD, axis=0)
       loss_all_USAM[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM, axis=0)

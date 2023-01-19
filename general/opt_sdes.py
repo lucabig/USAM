@@ -4,8 +4,10 @@ import jax
 import copy
 import jax.numpy as jnp
 from losses import *
-jax.config.update('jax_platform_name', 'cpu')
+#jax.config.update('jax_platform_name', 'cpu')
 jax.config.update("jax_enable_x64", True)
+
+
 
 
 def SGD(nit, eta, problem,seed):
@@ -18,6 +20,7 @@ def SGD(nit, eta, problem,seed):
   
   Sigma = problem.Sigma 
   d = problem.x0.shape[0]
+
   comparison_stat = np.zeros((nit,))
   loss_hist = np.zeros((nit,))
   grad_list = np.zeros((nit,))
@@ -72,6 +75,7 @@ def SGD_SDE(nit,eta,dt,problem,seed):
 
   d = problem.x0.shape[0]
   Sigma = problem.Sigma
+
   #appending first stats
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
@@ -122,6 +126,7 @@ def USAM(nit, eta, rho, problem,seed): # THIS IS USAM
   g_x = jax.jit(g_x)
 
   #appending first stats
+  Sigma = problem.Sigma
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
   if name == 3 and problem.use_analytical:
@@ -138,7 +143,7 @@ def USAM(nit, eta, rho, problem,seed): # THIS IS USAM
   for k in tqdm(range(nit-1)):
     #update
     np.random.seed(k*seed)
-    Z = jnp.array(problem.Sigma@np.random.normal(size=(d,)))
+    Z = jnp.array(Sigma@np.random.normal(size=(d,)))
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
       x_it = x_it - eta*(problem.grad(x_it + rho*(grad_local + Z)).flatten()+Z)
@@ -171,6 +176,7 @@ def SAM(nit, eta, rho,problem,seed):
   g_x = jax.jit(g_x)
 
   #appending first stats
+  Sigma = problem.Sigma
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
   if name == 3 and problem.use_analytical:
@@ -187,7 +193,7 @@ def SAM(nit, eta, rho,problem,seed):
   for k in tqdm(range(nit-1)):
     #update
     np.random.seed(k*seed)
-    Z = jnp.array(problem.Sigma@np.random.normal(size=(d,)))
+    Z = jnp.array(Sigma@np.random.normal(size=(d,)))
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
       x_it = x_it - eta*(problem.grad(x_it + (rho/jnp.linalg.norm(grad_local))*(grad_local+ Z)).flatten()+Z)
@@ -206,16 +212,18 @@ def SAM(nit, eta, rho,problem,seed):
 
 
 
-
-
+#@partial(jax.jit, static_argnums=(0,1,2,3,4,5))
 def USAM_SDE1(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
   x = []
   comparison_stat = np.zeros((nit_sde,))
+  #comparison_stat = jnp.zeros((nit_sde,))
   loss_hist = np.zeros((nit_sde,))
+  #loss_hist = jnp.zeros((nit_sde,))
   grad_list = np.zeros((nit_sde,))
+  #grad_list = jnp.zeros((nit_sde,))
   tr_list = np.zeros((nit_sde,))
   Sigma = problem.Sigma
 
@@ -227,14 +235,18 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
   d = problem.x0.shape[0]
   #appending first stats
   x_it = copy.deepcopy(problem.x0) 
+  #x.append(jnp.array(x_it).flatten())
   x.append(np.array(x_it).flatten())
   if name == 3 and problem.use_analytical:
     grad_0 = problem.grad(x_it).flatten()
   else:
     grad_0 = g_x(x_it,name)
-  comparison_stat[0] = jnp.linalg.norm(grad_0)+ jnp.linalg.norm(x_it)
+  comparison_stat[0] = jnp.linalg.norm(grad_0) + jnp.linalg.norm(x_it)
+  #comparison_stat = comparison_stat.at[0].set(jnp.linalg.norm(grad_0)+ jnp.linalg.norm(x_it))
   loss_hist[0] = problem.loss(x_it,name)
+  #loss_hist = loss_hist.at[0].set(problem.loss(x_it,name))
   grad_list[0] = jnp.linalg.norm(grad_0)
+  #grad_list = grad_list.at[0].set(jnp.linalg.norm(grad_0))
   if name == 3:
     tr_list[0] = problem.hess_trace(x_it)
 
@@ -246,7 +258,7 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
       hess_local = H_x(x_it,name)
-      grad_tilde = grad_local+rho*hess_local@grad_local
+      grad_tilde = grad_local+rho*hess_local@grad_local  ### (np.eye(d) + rho*hess_local)@grad_local
       x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+rho*hess_local)@Sigma@delta_W))
     else:
       grad_local = g_x(x_it,name)
@@ -256,12 +268,17 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
     
     #saving stats
     x.append(np.array(x_it).flatten())
+    #x.append(jnp.array(x_it).flatten())
     comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
+    #comparison_stat = comparison_stat.at[k+1].set(jnp.linalg.norm(grad_local)+ jnp.linalg.norm(x_it))
     loss_hist[k+1] = problem.loss(x_it,name)
+    #loss_hist = loss_hist.at[k+1].set(problem.loss(x_it,name))
     grad_list[k+1] = jnp.linalg.norm(grad_local)
+    #grad_list = grad_list.at[k+1].set(jnp.linalg.norm(grad_local))
     if name == 3:
       tr_list[k+1] = problem.hess_trace(x_it)
   return np.array(x),np.array(loss_hist), np.array(comparison_stat),np.array(grad_list),np.array(tr_list)
+  #return jnp.array(x),jnp.array(loss_hist), jnp.array(comparison_stat),jnp.array(grad_list),jnp.array(tr_list)
 
 
 def SAM_SDE1(nit, eta, rho, dt,problem,seed):

@@ -7,7 +7,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.datasets import load_breast_cancer
 from functools import partial
 from jax.scipy.special import expit as sigmoid
-jax.config.update('jax_platform_name', 'cpu')
+#jax.config.update('jax_platform_name', 'cpu')
 jax.config.update("jax_enable_x64", True)
 
 
@@ -36,16 +36,17 @@ class Opt_problem:
             else:
               self.index = 4
             d1 = int(self.num_feat_class*self.HIDDEN)
-            d2 = int(self.HIDDEN*self.HIDDEN)
+            #d2 = int(self.HIDDEN*self.HIDDEN)
             d = int(self.HIDDEN*self.num_classes)
-            ds = [d1,d2,d]
+            #ds = [d1,d2,d]
+            ds = [d1,d]
             x0s = []
             for i,k in enumerate(ds):
                 x0 = (jnp.array(np.random.normal(size=(k,))/np.sqrt(self.HIDDEN))).flatten() # sqrt dim input
                 x0s.append(x0)
             self.x0 = jnp.concatenate(x0s)
             # random noise covariance
-            M = int(2*(sum(ds)))
+            #M = int(2*(sum(ds)))
             #A = np.random.normal(size=(sum(ds),M))
             #Sigma_squared = A@A.T/N_class
             #U,S,V = np.linalg.svd(Sigma_squared)
@@ -54,10 +55,10 @@ class Opt_problem:
             self.Sigma = self.sigma*jnp.array(np.eye(sum(ds))) 
         else: 
             self.index=1
-            #self.x0 = jnp.array(np.random.normal(size=(d_class_shallow,))/np.sqrt(self.num_feat_class)) # Glorot init
-            self.x0=1*np.random.randn(d_class_shallow,)
+            self.x0 = jnp.array(np.random.normal(size=(d_class_shallow,))/np.sqrt(self.num_feat_class)) # Glorot init
+            #self.x0=1*np.random.randn(d_class_shallow,)
             d = self.x0.shape[0]
-            M = int(2*d)
+            #M = int(2*d)
             #A = np.random.normal(size=(d,M))
             #Sigma_squared = A@A.T/N_class
             #U,S,V = np.linalg.svd(Sigma_squared)
@@ -106,7 +107,7 @@ class Opt_problem:
         self.A_vec = A_vec
    
         y = A_vec@X_sol.flatten()
-        self.y = y+1*np.random.normal(0, 1, y.shape) #### TODO: put in cfg
+        self.y = y+0.01*np.random.normal(0, 1, y.shape) #### TODO: put in cfg
 
         #initialization
         x0=np.random.normal(0, 1/np.sqrt(n_sensing), (n_sensing , n_sensing))
@@ -142,11 +143,13 @@ class Opt_problem:
     num_classes = self.num_classes
     HIDDEN = self.HIDDEN
     d1_squared= int(num_feat*HIDDEN)
-    h_squared = int(HIDDEN*HIDDEN)
+    #h_squared = int(HIDDEN*HIDDEN)
     W1 = jnp.reshape(x[:d1_squared],(num_feat,HIDDEN))
-    W2 = jnp.reshape(x[d1_squared:d1_squared+h_squared],(HIDDEN,HIDDEN))
-    W = jnp.reshape(x[d1_squared+h_squared:],(HIDDEN,num_classes))
-    logits = self.X@W1@W2@W
+    #W2 = jnp.reshape(x[d1_squared:d1_squared+h_squared],(HIDDEN,HIDDEN))
+    #W = jnp.reshape(x[d1_squared+h_squared:],(HIDDEN,num_classes))
+    W = jnp.reshape(x[d1_squared:],(HIDDEN,num_classes))
+    #logits = self.X@W1@W2@W
+    logits = self.X@W1@W
     #target = jax.nn.one_hot(self.y, num_classes)
     return jnp.sum(jnp.log(1+jnp.exp(-logits[:,0] * self.y)))/(2*self.N_class) +  (0.1/2)*np.sum(x**2)
 
@@ -159,9 +162,11 @@ class Opt_problem:
     d1_squared= int(num_feat*HIDDEN)
     h_squared = int(HIDDEN*HIDDEN)
     W1 = jnp.reshape(x[:d1_squared],(num_feat,HIDDEN))
-    W2 = jnp.reshape(x[d1_squared:d1_squared+h_squared],(HIDDEN,HIDDEN))
-    W = jnp.reshape(x[d1_squared+h_squared:],(HIDDEN,num_classes))
-    logits = sigmoid(sigmoid(sigmoid(self.X@W1)@W2)@W)
+    #W2 = jnp.reshape(x[d1_squared:d1_squared+h_squared],(HIDDEN,HIDDEN))
+    #W = jnp.reshape(x[d1_squared+h_squared:],(HIDDEN,num_classes))
+    W = jnp.reshape(x[d1_squared:],(HIDDEN,num_classes))
+    #logits = sigmoid(sigmoid(sigmoid(self.X@W1)@W2)@W)
+    logits = sigmoid(sigmoid(self.X@W1)@W)
     #target = jax.nn.one_hot(self.y, num_classes)
     return jnp.sum(jnp.log(1+jnp.exp(-logits[:,0] * self.y)))/(2*self.N_class) +  (0.1/2)*np.sum(x**2)
   
@@ -215,4 +220,5 @@ class Opt_problem:
 
   def H_x(self):
     return jax.hessian(self.loss, argnums=0)
+
 
