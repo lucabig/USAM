@@ -1,8 +1,8 @@
 #### experimental setting
-nexp: 1
-nit: 50000
-etas: [0.001]
-rhos: [0.001,0.01,0.03,0.1]
+nexp: 3
+nit: 5000
+etas: [0.01]
+rhos: [0.01,0.1,0.3,1]
 f_star: 0 
 resolution: 1
 sdes: True
@@ -10,7 +10,7 @@ use_analytical: False
 check_drift: True
 
 #### experiment type
-name: 'matrix_sensing'
+name: 'class_deep_linear'
 
 #### quadratic
 d_quadratic: 20
@@ -26,3 +26,12 @@ n_sensing: 5
 U_rank: 2
 num_samples: 10
 num_samples_test: 100
+
+#### teacher_student
+teac_feature_dim: 5
+teac_n_layers: 3 
+teac_n_nodes: 100
+teac_linear: False
+stud_n_layers: 1
+stud_n_nodes: 10
+stud_linear: False

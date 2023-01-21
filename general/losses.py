@@ -20,6 +20,14 @@ class Opt_problem:
     self.HIDDEN = cfg.HIDDEN
     self.sigma = cfg.sigma
     self.use_analytical = cfg.use_analytical
+    self.teac_feature_dim = cfg.teac_feature_dim
+    self.teac_n_layers = cfg.teac_n_layers
+    self.teac_n_nodes = cfg.teac_n_nodes
+    self.teac_linear = cfg.teac_linear
+    self.stud_n_layers = cfg.stud_n_layers
+    self.stud_n_nodes = cfg.stud_n_nodes
+    self.stud_linear = cfg.stud_linear
+
     
     if self.name == 'class_shallow_linear' or self.name == 'class_deep_linear' or self.name == 'class_deep_nonlinear':
         scaler = StandardScaler()
@@ -119,6 +127,64 @@ class Opt_problem:
 
         # noise
         self.Sigma = self.sigma*jnp.array(np.eye(self.x0.flatten().shape[0]))
+      
+  
+    elif self.name == 'teacher_student':
+      self.index=5
+      ## generate data with teacher
+      W_opt = []
+      self.X = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (2*self.teac_feature_dim , self.teac_feature_dim))
+      for l in range(self.teac_n_layers):
+        if l == 0:
+          W0 = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim , self.teac_n_nodes))
+          W_opt.append(W0)
+          if self.teac_linear:
+            y = self.X@W0
+          else:
+            y = sigmoid(self.X@W0)
+        else:
+          W_l = np.random.normal(0, 1/np.sqrt(self.teac_n_nodes), (self.teac_n_nodes , self.teac_n_nodes))
+          W_opt.append(W_l)
+          if self.teac_linear:
+            y = y@W_l
+          else:
+            y = sigmoid(y@W_l)  
+      W_out = np.random.normal(0, 1/np.sqrt(self.teac_n_nodes), (self.teac_n_nodes ,1))
+      W_opt.append(W_out)
+      self.y = y@W_out
+
+      n_params = self.teac_feature_dim*self.stud_n_nodes + self.stud_n_nodes*self.stud_n_nodes*(self.stud_n_layers-1)+self.stud_n_nodes 
+      self.n_params = n_params
+      self.x0 = np.random.normal(0,1/np.sqrt(n_params),n_params)
+      self.Sigma = self.sigma*jnp.array(np.eye(n_params))
+
+
+
+  @partial(jax.jit, static_argnums=(0,))
+  def loss_teach_stud(self,x):
+    num_feat = self.teac_feature_dim
+    num_classes = 1
+    HIDDEN = self.stud_n_nodes
+    layers = self.stud_n_layers
+    d1_squared = num_feat*HIDDEN
+    for l in range(self.stud_n_layers):
+      if l == 0:
+        W = jnp.reshape(x[:num_feat*HIDDEN],(num_feat,HIDDEN))
+        if self.stud_linear:
+          y = self.X@W
+        else:
+          y = sigmoid(self.X@W)
+      else:
+        W_l = jnp.reshape(x[(num_feat*HIDDEN + l*HIDDEN*HIDDEN):HIDDEN],(HIDDEN,HIDDEN))
+        if self.stud_linear:
+          y = y@W_l
+        else:
+          y = sigmoid(y@W_l)
+    last = self.n_params-HIDDEN
+    W_out = jnp.reshape(x[last:],(HIDDEN,1))
+    y = y@W_out
+    return jnp.mean((y[:,0]-self.y[:,0])**2)
+        
 
 
   @partial(jax.jit, static_argnums=(0,))
@@ -188,6 +254,8 @@ class Opt_problem:
         return self.loss_sensing(x)
     elif self.index == 4:
         return self.loss_class_deep_nonlinear(x)
+    elif self.index == 5:
+      return self.loss_teach_stud(x)
 
 
   @partial(jax.jit, static_argnums=(0,))
