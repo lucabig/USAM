@@ -134,7 +134,7 @@ class Opt_problem:
       ## generate data with teacher
       W_opt = []
       self.X = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (2*self.teac_feature_dim , self.teac_feature_dim))
-      if self.teac_n_layers != 0:
+      if self.teac_n_layers > 0:
         for l in range(self.teac_n_layers):
           if l == 0:
             W0 = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim , self.teac_n_nodes))
@@ -153,17 +153,43 @@ class Opt_problem:
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_n_nodes), (self.teac_n_nodes ,1))
         W_opt.append(W_out)
         self.y = y@W_out
-        n_params = self.teac_feature_dim*self.stud_n_nodes + self.stud_n_nodes*self.stud_n_nodes*(self.stud_n_layers-1)+self.stud_n_nodes 
-        self.n_params = n_params
+
       else:
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim ,1))
         W_opt.append(W_out)
-        self.y = self.X@W_out
+        if self.teac_linear:
+          self.y = self.X@W_out
+        else:
+          self.y = sigmoid(self.X@W_out)
         n_params = self.teac_feature_dim
         self.n_params = n_params
 
 
-      self.x0 = np.random.normal(0,1/np.sqrt(n_params),n_params)
+      if self.stud_n_layers > 0:
+        n_params = self.teac_feature_dim*self.stud_n_nodes + self.stud_n_nodes*self.stud_n_nodes*(self.stud_n_layers-1)+self.stud_n_nodes 
+        self.n_params = n_params
+      else:
+        n_params = self.teac_feature_dim
+        self.n_params = n_params
+
+
+      W_opt_stud = []
+      if self.stud_n_layers > 0:
+        for l in range(self.stud_n_layers):
+          if l == 0:
+            W0 = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim*self.stud_n_nodes))
+            W_opt_stud.append(W0)
+          else:
+            W_l = np.random.normal(0, 1/np.sqrt(self.stud_n_nodes), (self.stud_n_nodes*self.stud_n_nodes))
+            W_opt_stud.append(W_l)
+        W_out = np.random.normal(0, 1/np.sqrt(self.stud_n_nodes), (self.stud_n_nodes*1))
+        W_opt_stud.append(W_out)
+      else:
+        W_out = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim*1))
+        W_opt_stud.append(W_out)
+
+      #self.x0 = np.random.normal(0,1/np.sqrt(n_params),n_params)
+      self.x0 = np.concatenate(W_opt_stud)
       self.Sigma = self.sigma*jnp.array(np.eye(n_params))
 
 
@@ -171,11 +197,8 @@ class Opt_problem:
   @partial(jax.jit, static_argnums=(0,))
   def loss_teach_stud(self,x):
     num_feat = self.teac_feature_dim
-    num_classes = 1
     HIDDEN = self.stud_n_nodes
-    layers = self.stud_n_layers
-    d1_squared = num_feat*HIDDEN
-    if self.teac_n_layers != 0:
+    if self.stud_n_layers > 0:
       for l in range(self.stud_n_layers):
         if l == 0:
           W = jnp.reshape(x[:num_feat*HIDDEN],(num_feat,HIDDEN))
@@ -194,7 +217,10 @@ class Opt_problem:
       y = y@W_out
     else:
       W_out = jnp.reshape(x,(self.n_params,1))
-      y = self.X@W_out 
+      if self.stud_linear:
+        y = self.X@W_out 
+      else:
+        y = sigmoid(self.X@W_out) 
     return jnp.mean((y[:,0]-self.y[:,0])**2)
         
 

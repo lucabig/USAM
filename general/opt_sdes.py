@@ -321,8 +321,10 @@ def SAM_SDE1(nit, eta, rho, dt,problem,seed):
     else:
       grad_local = g_x(x_it,name)
     hess_local = H_x(x_it,name)
-    grad_tilde = grad_local+(rho/jnp.linalg.norm(grad_local))*hess_local@grad_local
-    x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho/jnp.linalg.norm(grad_local))*hess_local)@Sigma@delta_W))
+    #grad_tilde = grad_local+(rho/jnp.linalg.norm(grad_local))*hess_local@grad_local
+    grad_tilde = grad_local+(rho)*hess_local@grad_local/jnp.linalg.norm(grad_local)
+    #x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho/jnp.linalg.norm(grad_local))*hess_local)@Sigma@delta_W))
+    x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho)*hess_local/jnp.linalg.norm(grad_local))@Sigma@delta_W))
 
     #saving stats
     x.append(np.array(x_it).flatten())
