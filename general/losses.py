@@ -152,7 +152,7 @@ class Opt_problem:
               y = sigmoid(y@W_l)  
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_n_nodes), (self.teac_n_nodes ,1))
         W_opt.append(W_out)
-        self.y = y@W_out
+        self.y = y@W_out + np.random.normal(0, cfg.noise_)
 
       else:
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim ,1))
@@ -207,7 +207,7 @@ class Opt_problem:
           else:
             y = sigmoid(self.X@W)
         else:
-          W_l = jnp.reshape(x[(num_feat*HIDDEN + l*HIDDEN*HIDDEN):HIDDEN],(HIDDEN,HIDDEN))
+          W_l = jnp.reshape(x[(num_feat*HIDDEN + (l-1)*HIDDEN*HIDDEN):(num_feat*HIDDEN + (l)*HIDDEN*HIDDEN)],(HIDDEN,HIDDEN))
           if self.stud_linear:
             y = y@W_l
           else:
@@ -221,7 +221,7 @@ class Opt_problem:
         y = self.X@W_out 
       else:
         y = sigmoid(self.X@W_out) 
-    return jnp.mean((y[:,0]-self.y[:,0])**2)
+    return jnp.mean((y[:,0]-self.y[:,0])**2) + (0.01/2)*np.sum(x**2)
         
 
 

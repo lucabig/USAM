@@ -1,25 +1,26 @@
 #### experimental setting
 nexp: 1
-nit: 20000
-etas: [0.001]
-rhos: [0.0001,0.001,0.03,0.1]
+nit: 1000
+etas: [0.01]
+rhos: [0.01]
 f_star: 0 
 resolution: 1
 sdes: True
 use_analytical: False
 check_drift: True
+sdes_only: True
 
 #### experiment type
 name: 'class_deep_linear'
 
 #### quadratic
-d_quadratic: 20
+d_quadratic: 200
 
 #### size hidden layer
-HIDDEN: 30
+HIDDEN: 200
 
 #### sigma noise
-sigma: 0.01
+sigma: 0.05
 
 #### matrix sensing
 n_sensing: 5
@@ -29,9 +30,11 @@ num_samples_test: 100
 
 #### teacher_student
 teac_feature_dim: 5
-teac_n_layers: 1
-teac_n_nodes: 20
+teac_n_layers: 2
+teac_n_nodes: 100
 teac_linear: True
-stud_n_layers: 1
-stud_n_nodes: 20
+
+stud_n_layers: 2
+stud_n_nodes: 100
 stud_linear: True
+noise_: 2

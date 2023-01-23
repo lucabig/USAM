@@ -188,38 +188,36 @@ def main(cfg):
       #do experiments
       for e in tqdm(range(nexp)):
 
-        x_it, loss_hist, stats, grad_hist,tr_hist = SGD(nit, eta, problem,e+1)
-        stats_SGD.append(stats)      
-        loss_hist_SGD.append(loss_hist)
-        grad_hist_SGD.append(grad_hist)
-        tr_hist_SGD.append(tr_hist)
-        x_it_hist_SGD.append(np.linalg.norm(x_it,axis=1))
+        if not cfg.sdes_only:  
+          print('Running SGD...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SGD(nit, eta, problem,e+1)
+          stats_SGD.append(stats)      
+          loss_hist_SGD.append(loss_hist)
+          grad_hist_SGD.append(grad_hist)
+          tr_hist_SGD.append(tr_hist)
+          x_it_hist_SGD.append(np.linalg.norm(x_it,axis=1))
 
-        x_it, loss_hist, stats, grad_hist,tr_hist = USAM(nit, eta, rho,problem,e+1)
-        stats_USAM.append(stats)
-        loss_hist_USAM.append(loss_hist)
-        grad_hist_USAM.append(grad_hist)
-        tr_hist_USAM.append(tr_hist)
-        x_it_hist_USAM.append(np.linalg.norm(x_it,axis=1))
+          print('Running USAM...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = USAM(nit, eta, rho,problem,e+1)
+          stats_USAM.append(stats)
+          loss_hist_USAM.append(loss_hist)
+          grad_hist_USAM.append(grad_hist)
+          tr_hist_USAM.append(tr_hist)
+          x_it_hist_USAM.append(np.linalg.norm(x_it,axis=1))
 
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM(nit, eta, rho,problem,e+1)
-        stats_SAM.append(stats)
-        loss_hist_SAM.append(loss_hist)
-        grad_hist_SAM.append(grad_hist)
-        tr_hist_SAM.append(tr_hist)
-        x_it_hist_SAM.append(np.linalg.norm(x_it,axis=1))
+
+          print('Running SAM...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM(nit, eta, rho,problem,e+1)
+          stats_SAM.append(stats)
+          loss_hist_SAM.append(loss_hist)
+          grad_hist_SAM.append(grad_hist)
+          tr_hist_SAM.append(tr_hist)
+          x_it_hist_SAM.append(np.linalg.norm(x_it,axis=1))
 
 
         if cfg.sdes:
 
-          x_it, loss_hist, stats, grad_hist,tr_hist = SGD_SDE(nit,eta,dt,problem,e+1)
-          stats_SGD_SDE.append(stats)
-          loss_hist_SGD_SDE.append(loss_hist)
-          grad_hist_SGD_SDE.append(grad_hist)
-          tr_hist_SGD_SDE.append(tr_hist)
-          x_it_hist_SGD_SDE.append(np.linalg.norm(x_it,axis=1))
-
-
+          print('Running USAM SDE...')
           x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE1(nit, eta, rho, dt,problem,e+1)
           stats_USAM_SDE.append(stats)
           loss_hist_USAM_SDE.append(loss_hist)
@@ -227,13 +225,21 @@ def main(cfg):
           tr_hist_USAM_SDE.append(tr_hist)
           x_it_hist_USAM_SDE.append(np.linalg.norm(x_it,axis=1))
 
-          
+          print('Running SAM SDE...')
           x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE1(nit,eta,rho, dt, problem,e+1)
           stats_SAM_SDE.append(stats)
           loss_hist_SAM_SDE.append(loss_hist)
           grad_hist_SAM_SDE.append(grad_hist)
           tr_hist_SAM_SDE.append(tr_hist)
           x_it_hist_SAM_SDE.append(np.linalg.norm(x_it,axis=1))
+
+          print('Running SGD SDE...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SGD_SDE(nit,eta,dt,problem,e+1)
+          stats_SGD_SDE.append(stats)
+          loss_hist_SGD_SDE.append(loss_hist)
+          grad_hist_SGD_SDE.append(grad_hist)
+          tr_hist_SGD_SDE.append(tr_hist)
+          x_it_hist_SGD_SDE.append(np.linalg.norm(x_it,axis=1))
 
 
           if cfg.check_drift:

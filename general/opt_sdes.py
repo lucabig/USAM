@@ -5,7 +5,9 @@ import copy
 import jax.numpy as jnp
 from losses import *
 #jax.config.update('jax_platform_name', 'cpu')
+from jax import grad
 jax.config.update("jax_enable_x64", True)
+
 
 
 
@@ -229,8 +231,12 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
 
   g_x = problem.g_x()
   g_x = jax.jit(g_x)
-  H_x = problem.H_x()
-  H_x = jax.jit(H_x)
+  #H_x = problem.H_x()
+  #H_x = jax.jit(H_x)
+
+  @partial(jax.jit)
+  def hvp(x, v):
+      return grad(lambda x: jnp.vdot(g_x(x,name), v))(x)
 
   d = problem.x0.shape[0]
   #appending first stats
@@ -262,9 +268,12 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
       x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+rho*hess_local)@Sigma@delta_W))
     else:
       grad_local = g_x(x_it,name)
-      hess_local = H_x(x_it,name)
-      grad_tilde = grad_local+rho*hess_local@grad_local
-      x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+rho*hess_local)@Sigma@delta_W))
+      #hess_local = H_x(x_it,name)
+      #grad_tilde = grad_local+rho*hess_local@grad_local
+      grad_tilde = grad_local+rho*hvp(x_it,grad_local)
+      #x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+rho*hess_local)@Sigma@delta_W)) 
+      increment = Sigma@delta_W
+      x_it = x_it - dt*(grad_tilde + jnp.eye(d)@increment + +rho*hvp(x_it,increment))
     
     #saving stats
     x.append(np.array(x_it).flatten())
@@ -294,8 +303,14 @@ def SAM_SDE1(nit, eta, rho, dt,problem,seed):
 
   g_x = problem.g_x()
   g_x = jax.jit(g_x)
-  H_x = problem.H_x()
-  H_x = jax.jit(H_x)
+  #H_x = problem.H_x()
+  #H_x = jax.jit(H_x)
+
+
+
+  @partial(jax.jit)
+  def hvp(x, v):
+      return grad(lambda x: jnp.vdot(g_x(x,name), v))(x)
 
   #appending first stats
   d = problem.x0.shape[0]
@@ -320,11 +335,15 @@ def SAM_SDE1(nit, eta, rho, dt,problem,seed):
       grad_local = problem.grad(x_it).flatten()
     else:
       grad_local = g_x(x_it,name)
-    hess_local = H_x(x_it,name)
+    #hess_local = H_x(x_it,name)
     #grad_tilde = grad_local+(rho/jnp.linalg.norm(grad_local))*hess_local@grad_local
-    grad_tilde = grad_local+(rho)*hess_local@grad_local/jnp.linalg.norm(grad_local)
+    #grad_tilde = grad_local+(rho)*hess_local@grad_local/jnp.linalg.norm(grad_local)
+    grad_tilde = grad_local+rho*hvp(x_it,grad_local/jnp.linalg.norm(grad_local))
     #x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho/jnp.linalg.norm(grad_local))*hess_local)@Sigma@delta_W))
-    x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho)*hess_local/jnp.linalg.norm(grad_local))@Sigma@delta_W))
+    #x_it = x_it - dt*(grad_tilde + jnp.array((np.eye(d)+(rho)*hess_local/jnp.linalg.norm(grad_local))@Sigma@delta_W))
+    increment = Sigma@delta_W
+    x_it = x_it - dt*(grad_tilde + jnp.array(np.eye(d)@increment+rho*hvp(x_it,increment/jnp.linalg.norm(grad_local))))
+
 
     #saving stats
     x.append(np.array(x_it).flatten())
@@ -350,8 +369,12 @@ def USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
 
   g_x = problem.g_x()
   g_x = jax.jit(g_x)
-  H_x = problem.H_x()
-  H_x = jax.jit(H_x)
+  #H_x = problem.H_x()
+  #H_x = jax.jit(H_x)
+
+  @partial(jax.jit)
+  def hvp(x, v):
+      return grad(lambda x: jnp.vdot(g_x(x,name), v))(x)
 
   d = problem.x0.shape[0]
   #appending first stats
@@ -379,10 +402,12 @@ def USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
       x_it = x_it - dt*(grad_tilde + jnp.array(Sigma@delta_W))
     else:
       grad_local = g_x(x_it,name)
-      hess_local = H_x(x_it,name)
-      grad_tilde = grad_local+rho*hess_local@grad_local
+      #hess_local = H_x(x_it,name)
+      #grad_tilde = grad_local+rho*hess_local@grad_local
+      grad_tilde = grad_local+rho*hvp(x_it,grad_local)
       x_it = x_it - dt*(grad_tilde + jnp.array(Sigma@delta_W))
-    
+
+
     #saving stats
     x.append(np.array(x_it).flatten())
     comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
@@ -408,8 +433,12 @@ def SAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
 
   g_x = problem.g_x()
   g_x = jax.jit(g_x)
-  H_x = problem.H_x()
-  H_x = jax.jit(H_x)
+  #H_x = problem.H_x()
+  #H_x = jax.jit(H_x)
+
+  @partial(jax.jit)
+  def hvp(x, v):
+      return grad(lambda x: jnp.vdot(g_x(x,name), v))(x)
 
   #appending first stats
   d = problem.x0.shape[0]
@@ -434,9 +463,11 @@ def SAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
       grad_local = problem.grad(x_it).flatten()
     else:
       grad_local = g_x(x_it,name)
-    hess_local = H_x(x_it,name)
-    grad_tilde = grad_local+(rho/jnp.linalg.norm(grad_local))*hess_local@grad_local
+    #hess_local = H_x(x_it,name)
+    #grad_tilde = grad_local+(rho/jnp.linalg.norm(grad_local))*hess_local@grad_local
+    grad_tilde = grad_local+rho*hvp(x_it,grad_local/jnp.linalg.norm(grad_local))
     x_it = x_it - dt*(grad_tilde + jnp.array(Sigma@delta_W))
+
 
     #saving stats
     x.append(np.array(x_it).flatten())
@@ -446,5 +477,9 @@ def SAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
     if name == 3:
       tr_list[k+1] = problem.hess_trace(x_it)
   return np.array(x),np.array(loss_hist), np.array(comparison_stat),np.array(grad_list),np.array(tr_list)
+
+
+
+
 
 
