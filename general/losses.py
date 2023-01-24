@@ -152,7 +152,8 @@ class Opt_problem:
               y = sigmoid(y@W_l)  
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_n_nodes), (self.teac_n_nodes ,1))
         W_opt.append(W_out)
-        self.y = y@W_out + np.random.normal(0, cfg.noise_)
+        y_ = y@W_out
+        self.y = y_ + np.random.normal(0, cfg.noise_)
 
       else:
         W_out = np.random.normal(0, 1/np.sqrt(self.teac_feature_dim), (self.teac_feature_dim ,1))

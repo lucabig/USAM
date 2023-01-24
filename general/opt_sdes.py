@@ -449,9 +449,9 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
       grad_local = g_x(x_it,name)
 
 
-    n_run1=10
-    n_run2=10
-    n_run3=10
+    n_run1=2
+    n_run2=2
+    n_run3=2
     ### clauclate sigma tilde
     grad_final = 0
     for i in range(n_run1):
@@ -478,7 +478,6 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
     grad_tilde_exp=grad_tilde_exp/n_run3
     grad_tilde_+=rho*grad_tilde_exp
 
-
     np.random.seed(k*seed)
     delta_W = np.random.normal(size=(d,))
 
@@ -494,6 +493,77 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
       tr_list[k+1] = problem.hess_trace(x_it)
   return np.array(x),np.array(loss_hist), np.array(comparison_stat),np.array(grad_list),np.array(tr_list)
 
+
+
+
+
+def SAM_SDE1_true_NO_COV(nit, eta, rho, dt,problem,seed):
+  name = problem.index
+  nit_sde = int(nit*eta/dt)
+  #initializing variables
+  x = []
+  comparison_stat = np.zeros((nit_sde,))
+  loss_hist = np.zeros((nit_sde,))
+  grad_list = np.zeros((nit_sde,))
+  tr_list = np.zeros((nit_sde,))
+  Sigma = problem.Sigma
+
+  g_x = problem.g_x()
+  g_x = jax.jit(g_x)
+  #H_x = problem.H_x()
+  #H_x = jax.jit(H_x)
+
+  @partial(jax.jit)
+  def hvp(x, v):
+      return grad(lambda x: jnp.vdot(g_x(x,name), v))(x)
+
+
+  #appending first stats
+  d = problem.x0.shape[0]
+  x_it = copy.deepcopy(problem.x0) 
+  x.append(np.array(x_it).flatten())
+  if name == 3 and problem.use_analytical:
+    grad_0 = problem.grad(x_it).flatten()
+  else:
+    grad_0 = g_x(x_it,name)
+  comparison_stat[0] = jnp.linalg.norm(grad_0)+ jnp.linalg.norm(x_it)
+  loss_hist[0] = problem.loss(x_it,name)
+  grad_list[0] = jnp.linalg.norm(grad_0)
+  if name == 3:
+    tr_list[0] = problem.hess_trace(x_it)
+
+  #loop
+  for k in tqdm(range(nit_sde-1)):
+    #update
+    if name == 3 and problem.use_analytical:
+      grad_local = problem.grad(x_it).flatten()
+    else:
+      grad_local = g_x(x_it,name)
+
+    n_run3=10
+
+    grad_tilde_ = grad_local
+    grad_tilde_exp = 0
+    for j in range(n_run3):
+      Z3 = jnp.array(Sigma@np.random.normal(size=(d,)))
+      grad_tilde_exp += hvp(x_it,(grad_local+Z3)/jnp.linalg.norm(grad_local+Z3))
+    grad_tilde_exp=grad_tilde_exp/n_run3
+    grad_tilde_+=rho*grad_tilde_exp
+
+    np.random.seed(k*seed)
+    delta_W = np.random.normal(size=(d,))
+
+    x_it = x_it - dt*(grad_tilde_ + jnp.array(Sigma@delta_W))
+
+
+    #saving stats
+    x.append(np.array(x_it).flatten())
+    comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
+    loss_hist[k+1] = problem.loss(x_it,name)
+    grad_list[k+1] = jnp.linalg.norm(grad_local)
+    if name == 3:
+      tr_list[k+1] = problem.hess_trace(x_it)
+  return np.array(x),np.array(loss_hist), np.array(comparison_stat),np.array(grad_list),np.array(tr_list)
 
 
 def USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
