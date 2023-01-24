@@ -443,8 +443,6 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
   #loop
   for k in tqdm(range(nit_sde-1)):
     #update
-    np.random.seed(k*seed)
-    delta_W = np.random.normal(size=(d,))
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
     else:
@@ -480,6 +478,9 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
     grad_tilde_exp=grad_tilde_exp/n_run3
     grad_tilde_+=rho*grad_tilde_exp
 
+
+    np.random.seed(k*seed)
+    delta_W = np.random.normal(size=(d,))
 
     x_it = x_it - dt*(grad_tilde_ + cov@delta_W)
 
