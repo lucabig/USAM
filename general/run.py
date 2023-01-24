@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pickle 
 from tqdm import tqdm
 import hydra
-jax.config.update('jax_platform_name', 'cpu')
+#jax.config.update('jax_platform_name', 'cpu')
 jax.config.update("jax_enable_x64", True)
 
 
@@ -243,6 +243,7 @@ def main(cfg):
 
 
           if cfg.check_drift:
+            print('Running USAM SDE DRIFT ONLY...')
             x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,e+1)
             stats_USAM_SDE_DRIFT.append(stats)
             loss_hist_USAM_SDE_DRIFT.append(loss_hist)
@@ -250,7 +251,7 @@ def main(cfg):
             tr_hist_USAM_SDE_DRIFT.append(tr_hist)
             x_it_hist_USAM_SDE_DRIFT.append(np.linalg.norm(x_it,axis=1))
 
-            
+            print('Running SAM SDE DRIFT ONLY...')
             x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE1_NO_COV(nit,eta,rho, dt, problem,e+1)
             stats_SAM_SDE_DRIFT.append(stats)
             loss_hist_SAM_SDE_DRIFT.append(loss_hist)
