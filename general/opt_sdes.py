@@ -449,9 +449,9 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
       grad_local = g_x(x_it,name)
 
 
-    n_run1=2
-    n_run2=2
-    n_run3=2
+    n_run1=10
+    n_run2=10
+    n_run3=10
     ### clauclate sigma tilde
     grad_final = 0
     for i in range(n_run1):
