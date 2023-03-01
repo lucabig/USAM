@@ -1,28 +1,36 @@
-import numpy as np
-from tqdm import tqdm
 import jax
-import copy
 import jax.numpy as jnp
-from losses import *
 #jax.config.update('jax_platform_name', 'cpu')
 from jax import grad
 jax.config.update("jax_enable_x64", True)
 
 
+import numpy as np
+
+from tqdm import tqdm
+import copy
+
+from losses import *
 
 
 
+
+# SGD optimizer
 def SGD(nit, eta, problem,seed):
-  #initializing variables
+  # problem name
   name = problem.index
-  x = []
 
+
+  # instantiate and jit gradient function
   g_x = problem.g_x()
   g_x = jax.jit(g_x)
   
+  # noise and problem dimension
   Sigma = problem.Sigma 
   d = problem.x0.shape[0]
 
+  # logs
+  x = []
   comparison_stat = np.zeros((nit,))
   loss_hist = np.zeros((nit,))
   grad_list = np.zeros((nit,))
@@ -31,6 +39,7 @@ def SGD(nit, eta, problem,seed):
   #appending first stats
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
+  # for matrix sensing use analytical grads
   if name == 3 and problem.use_analytical:
     grad_0 = problem.grad(x_it).flatten()
   else:
@@ -38,21 +47,25 @@ def SGD(nit, eta, problem,seed):
   comparison_stat[0] = jnp.linalg.norm(grad_0)+ jnp.linalg.norm(x_it)
   loss_hist[0] = problem.loss(x_it,name)
   grad_list[0] = jnp.linalg.norm(grad_0)
+  # for matrix sensing use analytical hessian
   if name == 3:
     tr_list[0] = problem.hess_trace(x_it)
 
-  #loop
+  # main loop
   for k in tqdm(range(nit-1)):
-    #update
-    np.random.seed(k*seed)
+    # fix seed at every iteration
+    np.random.seed(k*seed) # TODO: add cfg disable option
+    # noise matrix
     Z = jnp.array(Sigma@np.random.normal(size=(d,)))
+    # for matrix sensing use analytical grads
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
     else:
       grad_local = g_x(x_it,name)
+    # update
     x_it = x_it - eta*(grad_local+Z)
 
-    #saving stats
+    #saving stats ad return
     x.append(np.array(x_it).flatten())
     comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
     loss_hist[k+1] = problem.loss(x_it,name)
@@ -62,25 +75,31 @@ def SGD(nit, eta, problem,seed):
   return np.array(x),np.array(loss_hist), np.array(comparison_stat), np.array(grad_list), np.array(tr_list)
 
 
+# SGD SDE
 def SGD_SDE(nit,eta,dt,problem,seed):
+  # problem name and number of its
   name = problem.index
   nit_sde = int(nit*eta/dt)
-  #initializing variables
+
+  # instantiate and jit gradient function
+  g_x = problem.g_x()
+  g_x = jax.jit(g_x)
+
+  # noise and problem dimension
+  d = problem.x0.shape[0]
+  Sigma = problem.Sigma
+
+  # logs
   x = []
   comparison_stat = np.zeros((nit_sde,))
   loss_hist = np.zeros((nit_sde,))
   grad_list = np.zeros((nit_sde,))
   tr_list = np.zeros((nit_sde,))
 
-  g_x = problem.g_x()
-  g_x = jax.jit(g_x)
-
-  d = problem.x0.shape[0]
-  Sigma = problem.Sigma
-
   #appending first stats
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
+  # for matrix sensing use analytical grads
   if name == 3 and problem.use_analytical:
     grad_0 = problem.grad(x_it).flatten()
   else:
@@ -91,18 +110,21 @@ def SGD_SDE(nit,eta,dt,problem,seed):
   if name == 3:
     tr_list[0] = problem.hess_trace(x_it)
 
-  #loop
+  # main loop
   for k in tqdm(range(nit_sde-1)):
-    #update
-    np.random.seed(k*seed)
+    # fix seed at every iteration
+    np.random.seed(k*seed) # TODO: add cfg disable option
+    # delta noise sde
     delta_W = np.random.normal(size=(d,))  #TODO: should be multiplied by sqrt(dt)
+    # for matrix sensing use analytical grads
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
     else:
       grad_local = g_x(x_it,name)
+    # update
     x_it = x_it - dt*(grad_local + jnp.array(Sigma@delta_W))  #TODO: not entirely correct: should be np.sqrt(eta*dt)
 
-    #saving stats
+    #saving stats and return
     x.append(np.array(x_it).flatten())
     comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
     loss_hist[k+1] = problem.loss(x_it,name)
@@ -113,22 +135,27 @@ def SGD_SDE(nit,eta,dt,problem,seed):
 
 
 
-def USAM(nit, eta, rho, problem,seed): # THIS IS USAM
-
+# USAM optimizer
+def USAM(nit, eta, rho, problem,seed): 
+  # problem name
   name = problem.index
-  #initializing variables
-  x = []
+
+  g_x = problem.g_x()
+  g_x = jax.jit(g_x)
+
+  # noise and problem dimension
+  Sigma = problem.Sigma 
   d = problem.x0.shape[0]
+
+ 
+  #logs
+  x = []
   comparison_stat = np.zeros((nit,))
   loss_hist = np.zeros((nit,))
   grad_list = np.zeros((nit,))
   tr_list = np.zeros((nit,))
 
-  g_x = problem.g_x()
-  g_x = jax.jit(g_x)
-
-  #appending first stats
-  Sigma = problem.Sigma
+  # appending first stats
   x_it = copy.deepcopy(problem.x0) 
   x.append(np.array(x_it).flatten())
   if name == 3 and problem.use_analytical:
@@ -141,19 +168,22 @@ def USAM(nit, eta, rho, problem,seed): # THIS IS USAM
   if name == 3:
     tr_list[0] = problem.hess_trace(x_it)
 
-  #loop
+  # main loop
   for k in tqdm(range(nit-1)):
-    #update
-    np.random.seed(k*seed)
+    # fix seed at every iteration
+    np.random.seed(k*seed) # TODO: add cfg disable option
+    # noise sde
     Z = jnp.array(Sigma@np.random.normal(size=(d,)))
     if name == 3 and problem.use_analytical:
       grad_local = problem.grad(x_it).flatten()
+      # update
       x_it = x_it - eta*(problem.grad(x_it + rho*(grad_local + Z)).flatten()+Z)
     else:
       grad_local = g_x(x_it,name)
+      #update
       x_it = x_it - eta*(g_x(x_it + rho*(grad_local + Z),name)+Z)
 
-    #saving stats
+    #saving stats and return
     x.append(np.array(x_it).flatten())
     comparison_stat[k+1] = jnp.linalg.norm(grad_local) + jnp.linalg.norm(x_it)
     loss_hist[k+1] = problem.loss(x_it,name)
@@ -264,7 +294,7 @@ def SAM_true(nit, eta, rho,problem,seed):
 
 
 #@partial(jax.jit, static_argnums=(0,1,2,3,4,5))
-def USAM_SDE1(nit, eta, rho, dt,problem,seed):
+def USAM_SDE(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
@@ -339,7 +369,7 @@ def USAM_SDE1(nit, eta, rho, dt,problem,seed):
   #return jnp.array(x),jnp.array(loss_hist), jnp.array(comparison_stat),jnp.array(grad_list),jnp.array(tr_list)
 
 
-def SAM_SDE1(nit, eta, rho, dt,problem,seed):
+def SAM_SDE(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
@@ -405,7 +435,7 @@ def SAM_SDE1(nit, eta, rho, dt,problem,seed):
 
 
 
-def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
+def SAM_SDE_true(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
@@ -497,7 +527,7 @@ def SAM_SDE1_true(nit, eta, rho, dt,problem,seed):
 
 
 
-def SAM_SDE1_true_NO_COV(nit, eta, rho, dt,problem,seed):
+def SAM_SDE_true_NO_COV(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
@@ -566,7 +596,7 @@ def SAM_SDE1_true_NO_COV(nit, eta, rho, dt,problem,seed):
   return np.array(x),np.array(loss_hist), np.array(comparison_stat),np.array(grad_list),np.array(tr_list)
 
 
-def USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
+def USAM_SDE_NO_COV(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
@@ -630,7 +660,7 @@ def USAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
 
 
 
-def SAM_SDE1_NO_COV(nit, eta, rho, dt,problem,seed):
+def SAM_SDE_NO_COV(nit, eta, rho, dt,problem,seed):
   name = problem.index
   nit_sde = int(nit*eta/dt)
   #initializing variables
