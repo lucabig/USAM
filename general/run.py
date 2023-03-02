@@ -3,7 +3,7 @@ np.random.seed(42) # Added by Enea
 
 import jax
 import jax.numpy as jnp
-jax.config.update('jax_platform_name', 'cpu')
+#jax.config.update('jax_platform_name', 'cpu')
 jax.config.update("jax_enable_x64", True)
 
 from sklearn.datasets import load_breast_cancer
@@ -26,6 +26,8 @@ def main(cfg):
   name = cfg.name
   nexp = cfg.nexp
   nit = cfg.nit
+  fix_random_seed_it = cfg.fix_random_seed_it
+  nr1,nr2,nr3 = cfg.n_run1,cfg.n_run2,cfg.n_run3
 
   # optimizer settings
   etas = cfg.etas
@@ -279,81 +281,92 @@ def main(cfg):
       for e in tqdm(range(nexp)):
 
         # 1) SGD
-        print('Running SGD...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SGD(nit, eta, problem,e+1)
-        stats_SGD.append(stats)      
-        loss_hist_SGD.append(loss_hist)
-        x_it_hist_SGD.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SGD:
+          print('Running SGD...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SGD(nit, eta, problem,e+1,fix_random_seed_it)
+          stats_SGD.append(stats)      
+          loss_hist_SGD.append(loss_hist)
+          x_it_hist_SGD.append(np.linalg.norm(x_it,axis=1))
 
         # 2) SAM_TRUE
-        print('Running SAM_True...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM_true(nit, eta, rho,problem,e+1)
-        stats_SAM_True.append(stats)
-        loss_hist_SAM_True.append(loss_hist)
-        x_it_hist_SAM_True.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM_TRUE:
+          print('Running SAM_True...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM_true(nit, eta, rho,problem,e+1,fix_random_seed_it)
+          stats_SAM_True.append(stats)
+          loss_hist_SAM_True.append(loss_hist)
+          x_it_hist_SAM_True.append(np.linalg.norm(x_it,axis=1))
         
         # 3) SAM
-        print('Running SAM...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM(nit, eta, rho,problem,e+1)
-        stats_SAM.append(stats)
-        loss_hist_SAM.append(loss_hist)
-        x_it_hist_SAM.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM:
+          print('Running SAM...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM(nit, eta, rho,problem,e+1,fix_random_seed_it)
+          stats_SAM.append(stats)
+          loss_hist_SAM.append(loss_hist)
+          x_it_hist_SAM.append(np.linalg.norm(x_it,axis=1))
 
         # 4) USAM
-        print('Running USAM...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = USAM(nit, eta, rho,problem,e+1)
-        stats_USAM.append(stats)
-        loss_hist_USAM.append(loss_hist)
-        x_it_hist_USAM.append(np.linalg.norm(x_it,axis=1))
+        if cfg.USAM:
+          print('Running USAM...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = USAM(nit, eta, rho,problem,e+1,fix_random_seed_it)
+          stats_USAM.append(stats)
+          loss_hist_USAM.append(loss_hist)
+          x_it_hist_USAM.append(np.linalg.norm(x_it,axis=1))
 
         # 5) SAM_TRUE_SDE
-        print('Running SAM_True SDE...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_true(nit,eta,rho, dt, problem,e+1)
-        stats_SAM_True_SDE.append(stats)
-        loss_hist_SAM_True_SDE.append(loss_hist)
-        x_it_hist_SAM_True_SDE.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM_TRUE_SDE:
+          print('Running SAM_True SDE...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_true(nit,eta,rho, dt, problem,e+1,fix_random_seed_it,nr1,nr2,nr3)
+          stats_SAM_True_SDE.append(stats)
+          loss_hist_SAM_True_SDE.append(loss_hist)
+          x_it_hist_SAM_True_SDE.append(np.linalg.norm(x_it,axis=1))
 
         # 6) SAM_TRUE_SDE_DRIFT
-        print('Running SAM_True SDE no cov...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_true_NO_COV(nit,eta,rho, dt, problem,e+1)
-        stats_SAM_True_SDE_DRIFT.append(stats)
-        loss_hist_SAM_SDE_True_DRIFT.append(loss_hist)
-        x_it_hist_SAM_SDE_True_DRIFT.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM_TRUE_SDE_DRIFT:
+          print('Running SAM_True SDE no cov...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_true_NO_COV(nit,eta,rho, dt, problem,e+1,fix_random_seed_it,nr3)
+          stats_SAM_True_SDE_DRIFT.append(stats)
+          loss_hist_SAM_SDE_True_DRIFT.append(loss_hist)
+          x_it_hist_SAM_SDE_True_DRIFT.append(np.linalg.norm(x_it,axis=1))
 
         # 7) SGD_SDE
-        print('Running SGD SDE...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SGD_SDE(nit,eta,dt,problem,e+1)
-        stats_SGD_SDE.append(stats)
-        loss_hist_SGD_SDE.append(loss_hist)
-        x_it_hist_SGD_SDE.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SGD_SDE:
+          print('Running SGD SDE...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SGD_SDE(nit,eta,dt,problem,e+1,fix_random_seed_it)
+          stats_SGD_SDE.append(stats)
+          loss_hist_SGD_SDE.append(loss_hist)
+          x_it_hist_SGD_SDE.append(np.linalg.norm(x_it,axis=1))
 
         # 8) SAM_SDE
-        print('Running SAM SDE...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE(nit,eta,rho, dt, problem,e+1)
-        stats_SAM_SDE.append(stats)
-        loss_hist_SAM_SDE.append(loss_hist)
-        x_it_hist_SAM_SDE.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM_SDE:
+          print('Running SAM SDE...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE(nit,eta,rho, dt, problem,e+1,fix_random_seed_it)
+          stats_SAM_SDE.append(stats)
+          loss_hist_SAM_SDE.append(loss_hist)
+          x_it_hist_SAM_SDE.append(np.linalg.norm(x_it,axis=1))
 
         # 9) SAM_SDE_DRIFT
-        print('Running SAM SDE no cov...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_NO_COV(nit,eta,rho, dt, problem,e+1)
-        stats_SAM_SDE_DRIFT.append(stats)
-        loss_hist_SAM_SDE_DRIFT.append(loss_hist)
-        x_it_hist_SAM_SDE_DRIFT.append(np.linalg.norm(x_it,axis=1))
+        if cfg.SAM_SDE_DRIFT:
+          print('Running SAM SDE no cov...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = SAM_SDE_NO_COV(nit,eta,rho, dt, problem,e+1,fix_random_seed_it)
+          stats_SAM_SDE_DRIFT.append(stats)
+          loss_hist_SAM_SDE_DRIFT.append(loss_hist)
+          x_it_hist_SAM_SDE_DRIFT.append(np.linalg.norm(x_it,axis=1))
 
         # 10) USAM_SDE
-        print('Running USAM SDE...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE(nit,eta,rho, dt, problem,e+1)
-        stats_USAM_SDE.append(stats)
-        loss_hist_USAM_SDE.append(loss_hist)
-        x_it_hist_USAM_SDE.append(np.linalg.norm(x_it,axis=1))
+        if cfg.USAM_SDE:
+          print('Running USAM SDE...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE(nit,eta,rho, dt, problem,e+1,fix_random_seed_it)
+          stats_USAM_SDE.append(stats)
+          loss_hist_USAM_SDE.append(loss_hist)
+          x_it_hist_USAM_SDE.append(np.linalg.norm(x_it,axis=1))
 
         # 11) USAM_SDE_DRIFT
-        print('Running USAM SDE no cov...')
-        x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE_NO_COV(nit,eta,rho, dt, problem,e+1)
-        stats_USAM_SDE_DRIFT.append(stats)
-        loss_hist_USAM_SDE_DRIFT.append(loss_hist)
-        x_it_hist_USAM_SDE_DRIFT.append(np.linalg.norm(x_it,axis=1))
+        if cfg.USAM_SDE_DRIFT:
+          print('Running USAM SDE no cov...')
+          x_it, loss_hist, stats, grad_hist,tr_hist = USAM_SDE_NO_COV(nit,eta,rho, dt, problem,e+1,fix_random_seed_it)
+          stats_USAM_SDE_DRIFT.append(stats)
+          loss_hist_USAM_SDE_DRIFT.append(loss_hist)
+          x_it_hist_USAM_SDE_DRIFT.append(np.linalg.norm(x_it,axis=1))
 
 
       #converting to numpy
@@ -395,127 +408,170 @@ def main(cfg):
 
 
       #average over runs
-      stats_SGD = np.mean(stats_SGD, axis=0)
-      stats_SAM_True = np.mean(stats_SAM_True, axis=0)
-      stats_SAM = np.mean(stats_SAM, axis=0)
-      stats_USAM = np.mean(stats_USAM, axis=0)
-      stats_SGD_SDE = np.mean(stats_SGD_SDE, axis=0)[::int(eta/dt)]
-      stats_SAM_True_SDE = np.mean(stats_SAM_True_SDE, axis=0)[::int(eta/dt)]
-      stats_SAM_SDE = np.mean(stats_SAM_SDE, axis=0)[::int(eta/dt)]
-      stats_USAM_SDE = np.mean(stats_USAM_SDE, axis=0)[::int(eta/dt)]
-      stats_USAM_SDE_DRIFT = np.mean(stats_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      stats_SAM_SDE_DRIFT = np.mean(stats_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      stats_SAM_SDE_True_DRIFT = np.mean(stats_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SGD:
+        stats_SGD = np.mean(stats_SGD, axis=0)
+      if cfg.SAM_TRUE:
+        stats_SAM_True = np.mean(stats_SAM_True, axis=0)
+      if cfg.SAM:
+        stats_SAM = np.mean(stats_SAM, axis=0)
+      if cfg.USAM:
+        stats_USAM = np.mean(stats_USAM, axis=0)
+      if cfg.SGD_SDE:
+        stats_SGD_SDE = np.mean(stats_SGD_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE:
+        stats_SAM_True_SDE = np.mean(stats_SAM_True_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE:
+        stats_SAM_SDE = np.mean(stats_SAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE:
+        stats_USAM_SDE = np.mean(stats_USAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE_DRIFT:
+        stats_USAM_SDE_DRIFT = np.mean(stats_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE_DRIFT:
+        stats_SAM_SDE_DRIFT = np.mean(stats_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE_DRIFT:
+        stats_SAM_SDE_True_DRIFT = np.mean(stats_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
 
 
       # 1) SGD vs SGD_SDE
-      error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
-      error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
+      if cfg.SGD and cfg.SGD_SDE:
+        error_mean_SGD_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
+        error_std_SGD_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SGD-stats_SGD_SDE))/(np.mean(np.abs(stats_SGD)))
       # 2) SAM_TRUE vs SGD_SDE
-      error_mean_SAM_True_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      error_std_SAM_True_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM_True)))
+      if cfg.SAM_TRUE and cfg.SGD_SDE:
+        error_mean_SAM_True_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM_True)))
+        error_std_SAM_True_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM_True)))
       # 3) SAM_TRUE vs SAM_TRUE_SDE
-      error_mean_SAM_True_SAM_True_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_True_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      error_std_SAM_True_SAM_True_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SAM_True_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      # 4) SAM vs SGD_SDE
-      error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
-      error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
-      # 5) SAM vs SAM_SDE
-      error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
-      error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
-      # 6) USAM vs SAM_SDE
-      error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
-      error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
-      # 7) USAM vs USAM_SDE
-      error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
-      error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
-      # 8) SAM_TRUE vs SAM_SDE
-      error_mean_SAM_True_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      # 9) SAM_TRUE vs USAM_SDE
-      error_mean_SAM_True_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_USAM_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      error_std_SAM_True_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_USAM_SDE))/(np.mean(np.abs(stats_SAM_True)))
-      # 10) SAM_TRUE vs SAM_TRUE_SDE_DRIFT
-      error_mean_SAM_True_SAM_True_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_SDE_True_DRIFT))/(np.mean(np.abs(stats_SAM_True)))
-      error_std_SAM_True_SAM_True_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SAM_SDE_True_DRIFT))/(np.mean(np.abs(stats_SAM_True)))
-      # 11) USAM vs SGD_SDE
-      error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
-      error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
+      if cfg.SAM_TRUE and cfg.SAM_TRUE_SDE:
+        error_mean_SAM_True_SAM_True_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_True_SDE))/(np.mean(np.abs(stats_SAM_True)))
+        error_std_SAM_True_SAM_True_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SAM_True_SDE))/(np.mean(np.abs(stats_SAM_True)))
+      # 4) SAM_TRUE vs SAM_SDE
+      if cfg.SAM_TRUE and cfg.SAM_SDE:
+        error_mean_SAM_True_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM_True)))
+        error_std_SAM_True_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM_True)))      
+      # 5) SAM_TRUE vs USAM_SDE
+      if cfg.SAM_TRUE and cfg.USAM_SDE:
+        error_mean_SAM_True_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_USAM_SDE))/(np.mean(np.abs(stats_SAM_True)))
+        error_std_SAM_True_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_USAM_SDE))/(np.mean(np.abs(stats_SAM_True)))      
+      # 6) SAM vs SGD_SDE
+      if cfg.SAM and cfg.SGD_SDE:
+        error_mean_SAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
+        error_std_SAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SGD_SDE))/(np.mean(np.abs(stats_SAM)))
+      # 7) SAM vs SAM_SDE
+      if cfg.SAM and cfg.SAM_SDE:
+        error_mean_SAM_SAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
+        error_std_SAM_SAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE))/(np.mean(np.abs(stats_SAM)))
+      # 8) USAM vs USAM_SDE
+      if cfg.USAM and cfg.USAM_SDE:
+        error_mean_USAM_USAM_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_std_USAM_USAM_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE))/(np.mean(np.abs(stats_USAM)))
+      # 9) USAM vs SGD_SDE
+      if cfg.USAM and cfg.SGD_SDE:
+        error_mean_USAM_SGD_SDE[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))
+        error_std_USAM_SGD_SDE[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_SGD_SDE))/(np.mean(np.abs(stats_USAM)))      
       # 10) USAM vs USAM_SDE_DRIFT
-      error_mean_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM)))
-      error_std_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM)))
-      # 12) SAM vs SAM_SDE_DRIFT
-      error_mean_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))
-      error_std_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))
+      if cfg.USAM and cfg.USAM_SDE_DRIFT:
+        error_mean_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM)))
+        error_std_USAM_USAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_USAM-stats_USAM_SDE_DRIFT))/(np.mean(np.abs(stats_USAM)))      
+      # 11) SAM vs SAM_SDE_DRIFT
+      if cfg.SAM and cfg.SAM_SDE_DRIFT:
+        error_mean_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))
+        error_std_SAM_SAM_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM-stats_SAM_SDE_DRIFT))/(np.mean(np.abs(stats_SAM)))      
+      # 12) SAM_TRUE vs SAM_TRUE_SDE_DRIFT
+      if cfg.SAM_TRUE and cfg.SAM_TRUE_SDE_DRIFT:
+        error_mean_SAM_True_SAM_True_SDE_DRIFT[idx_eta, idx_rho] = np.max(np.abs(stats_SAM_True-stats_SAM_SDE_True_DRIFT))/(np.mean(np.abs(stats_SAM_True)))
+        error_std_SAM_True_SAM_True_SDE_DRIFT[idx_eta, idx_rho] = np.std(np.abs(stats_SAM_True-stats_SAM_SDE_True_DRIFT))/(np.mean(np.abs(stats_SAM_True)))
 
 
       # 1) SGD loss
-      loss_all_SGD[idx_eta, idx_rho,:] = np.mean(loss_hist_SGD, axis=0)
-      loss_all_SGD_std[idx_eta, idx_rho,:] = np.std(loss_hist_SGD, axis=0)
+      if cfg.SGD:
+        loss_all_SGD[idx_eta, idx_rho,:] = np.mean(loss_hist_SGD, axis=0)
+        loss_all_SGD_std[idx_eta, idx_rho,:] = np.std(loss_hist_SGD, axis=0)
       # 2) SAM_TRUE loss
-      loss_all_SAM_True[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_True, axis=0)
-      loss_all_SAM_True_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_True, axis=0)
+      if cfg.SAM_TRUE:
+        loss_all_SAM_True[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_True, axis=0)
+        loss_all_SAM_True_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_True, axis=0)
       # 3) SAM loss
-      loss_all_SAM[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM, axis=0)
-      loss_all_SAM_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM, axis=0)
+      if cfg.SAM:
+        loss_all_SAM[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM, axis=0)
+        loss_all_SAM_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM, axis=0)
       # 4) USAM loss
-      loss_all_USAM[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM, axis=0)
-      loss_all_USAM_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM, axis=0)
+      if cfg.USAM:
+        loss_all_USAM[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM, axis=0)
+        loss_all_USAM_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM, axis=0)
       # 5) SGD_SDE loss
-      loss_all_SGD_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SGD_SDE, axis=0)[::int(eta/dt)]
-      loss_all_SGD_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SGD_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SGD_SDE:
+        loss_all_SGD_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SGD_SDE, axis=0)[::int(eta/dt)]
+        loss_all_SGD_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SGD_SDE, axis=0)[::int(eta/dt)]
       # 6) SAM_TRUE_SDE loss
-      loss_all_SAM_True_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
-      loss_all_SAM_True_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE:
+        loss_all_SAM_True_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
+        loss_all_SAM_True_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
       # 7) SAM_SDE loss
-      loss_all_SAM_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE, axis=0)[::int(eta/dt)]
-      loss_all_SAM_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE:
+        loss_all_SAM_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE, axis=0)[::int(eta/dt)]
+        loss_all_SAM_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE, axis=0)[::int(eta/dt)]
       # 8) USAM_SDE loss
-      loss_all_USAM_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM_SDE, axis=0)[::int(eta/dt)]
-      loss_all_USAM_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE:
+        loss_all_USAM_SDE[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM_SDE, axis=0)[::int(eta/dt)]
+        loss_all_USAM_SDE_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM_SDE, axis=0)[::int(eta/dt)]
       # 9) USAM_SDE_DRIFT loss
-      loss_all_USAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      loss_all_USAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE_DRIFT:
+        loss_all_USAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+        loss_all_USAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
       # 10) SAM_SDE_DRIFT loss
-      loss_all_SAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      loss_all_SAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE_DRIFT:
+        loss_all_SAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+        loss_all_SAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
       # 11) SAM_SDE_TRUE_DRIFT loss
-      loss_all_SAM_SDE_True_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
-      loss_all_SAM_SDE_True_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE_DRIFT:
+        loss_all_SAM_SDE_True_DRIFT[idx_eta, idx_rho,:] = np.mean(loss_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
+        loss_all_SAM_SDE_True_DRIFT_std[idx_eta, idx_rho,:] = np.std(loss_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
 
-      
-      # 1) SGD traj      
-      x_it_all_SGD[idx_eta, idx_rho,:] = np.mean(x_it_hist_SGD, axis=0)
-      x_it_all_SGD_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SGD, axis=0)
+
+      # 1) SGD traj
+      if cfg.SGD:      
+        x_it_all_SGD[idx_eta, idx_rho,:] = np.mean(x_it_hist_SGD, axis=0)
+        x_it_all_SGD_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SGD, axis=0)
       # 2) SAM_TRUE traj
-      x_it_all_SAM_True[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_True, axis=0)
-      x_it_all_SAM_True_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_True, axis=0)
+      if cfg.SAM_TRUE:
+        x_it_all_SAM_True[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_True, axis=0)
+        x_it_all_SAM_True_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_True, axis=0)
       # 3) SAM traj
-      x_it_all_SAM[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM, axis=0)
-      x_it_all_SAM_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM, axis=0)
+      if cfg.SAM:
+        x_it_all_SAM[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM, axis=0)
+        x_it_all_SAM_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM, axis=0)
       # 4) USAM traj
-      x_it_all_USAM[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM, axis=0)
-      x_it_all_USAM_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM, axis=0)
+      if cfg.USAM:
+        x_it_all_USAM[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM, axis=0)
+        x_it_all_USAM_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM, axis=0)
       # 5) SGD_SDE traj
-      x_it_all_SGD_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SGD_SDE, axis=0)[::int(eta/dt)]
-      x_it_all_SGD_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SGD_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SGD_SDE:
+        x_it_all_SGD_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SGD_SDE, axis=0)[::int(eta/dt)]
+        x_it_all_SGD_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SGD_SDE, axis=0)[::int(eta/dt)]
       # 6) SAM_TRUE_SDE traj
-      x_it_all_SAM_True_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
-      x_it_all_SAM_True_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE:
+        x_it_all_SAM_True_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
+        x_it_all_SAM_True_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_True_SDE, axis=0)[::int(eta/dt)]
       # 7) SAM_SDE traj
-      x_it_all_SAM_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE, axis=0)[::int(eta/dt)]
-      x_it_all_SAM_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE:
+        x_it_all_SAM_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE, axis=0)[::int(eta/dt)]
+        x_it_all_SAM_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE, axis=0)[::int(eta/dt)]
       # 8) USAM_SDE traj
-      x_it_all_USAM_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM_SDE, axis=0)[::int(eta/dt)]
-      x_it_all_USAM_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM_SDE, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE:
+        x_it_all_USAM_SDE[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM_SDE, axis=0)[::int(eta/dt)]
+        x_it_all_USAM_SDE_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM_SDE, axis=0)[::int(eta/dt)]
       # 9) USAM_SDE_DRIFT traj
-      x_it_all_USAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      x_it_all_USAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.USAM_SDE_DRIFT:
+        x_it_all_USAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+        x_it_all_USAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_USAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
       # 10) SAM_SDE_DRIFT traj
-      x_it_all_SAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
-      x_it_all_SAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_SDE_DRIFT:
+        x_it_all_SAM_SDE_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
+        x_it_all_SAM_SDE_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE_DRIFT, axis=0)[::int(eta/dt)]
       # 11) SAM_SDE_TRUE_DRIFT traj
-      x_it_all_SAM_SDE_True_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
-      x_it_all_SAM_SDE_True_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
+      if cfg.SAM_TRUE_SDE_DRIFT:
+        x_it_all_SAM_SDE_True_DRIFT[idx_eta, idx_rho,:] = np.mean(x_it_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
+        x_it_all_SAM_SDE_True_DRIFT_std[idx_eta, idx_rho,:] = np.std(x_it_hist_SAM_SDE_True_DRIFT, axis=0)[::int(eta/dt)]
       
       
     

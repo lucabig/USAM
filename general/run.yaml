@@ -5,12 +5,27 @@ etas: [0.01]
 rhos: [0.005,0.01,0.1,0.3]
 f_star: 0 
 resolution: 1
-sdes: True
 use_analytical: False
-check_drift: True
-sdes_only: False
 cov_diag: True
-gpu: False
+fix_random_seed_it: True
+
+#### which optimizers
+SGD: False
+SAM: False
+USAM: False
+SAM_TRUE: False
+SGD_SDE: False
+SAM_SDE: False
+USAM_SDE: False
+SAM_TRUE_SDE: True
+SAM_TRUE_SDE_DRIFT: False
+SAM_SDE_DRIFT: False
+USAM_SDE_DRIFT: False
+
+#### true sam sde
+n_run1: 10
+n_run2: 10
+n_run3: 10
 
 #### experiment type
 name: 'class_deep_linear'
@@ -19,7 +34,7 @@ name: 'class_deep_linear'
 d_quadratic: 20
 
 #### size hidden layer classification problems
-HIDDEN: 200
+HIDDEN: 20
 
 #### sigma noise
 sigma: 0.001
